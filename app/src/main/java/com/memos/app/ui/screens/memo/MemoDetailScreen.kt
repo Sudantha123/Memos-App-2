@@ -15,7 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.memos.app.ui.components.TagChip
 import com.memos.app.utils.DateUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MemoDetailScreen(
     memoName : String,
@@ -100,3 +100,4 @@ fun MemoDetailScreen(
         }
     }
 }
+
