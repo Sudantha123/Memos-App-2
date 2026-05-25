@@ -51,11 +51,13 @@ fun AppNavigation(preferenceManager: PreferenceManager) {
     ) {
 
         composable(Screen.ServerSetup.route) {
-            ServerSetupScreen {
-                nav.navigate(Screen.Login.route) {
-                    popUpTo(Screen.ServerSetup.route) { inclusive = true }
+            ServerSetupScreen(
+                onSetupComplete = {
+                    nav.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ServerSetup.route) { inclusive = true }
+                    }
                 }
-            }
+            )
         }
 
         composable(Screen.Login.route) {
@@ -114,3 +116,4 @@ fun AppNavigation(preferenceManager: PreferenceManager) {
         }
     }
 }
+
