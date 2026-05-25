@@ -155,13 +155,12 @@ fun HomeScreen(
         }
     ) { pad ->
 
-        val pullState = rememberPullToRefreshState()
-
-        Box(
-            modifier = Modifier
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh    = { vm.refresh() },
+            modifier     = Modifier
                 .fillMaxSize()
                 .padding(pad)
-                .nestedScroll(pullState.nestedScrollConnection)
         ) {
             when {
                 // Skeleton on very first load
@@ -182,18 +181,6 @@ fun HomeScreen(
                         )
                     }
                 }
-            }
-
-            PullToRefreshContainer(
-                state    = pullState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
-
-            if (pullState.isRefreshing) {
-                LaunchedEffect(Unit) { vm.refresh() }
-            }
-            LaunchedEffect(state.isRefreshing) {
-                if (!state.isRefreshing) pullState.endRefresh()
             }
         }
     }
