@@ -25,6 +25,10 @@ class AuthRepository @Inject constructor(
                         "Login failed (${signInResp.code()})"
                     )
                 }
+                val token = signInResp.body()?.accessToken
+                if (!token.isNullOrBlank()) {
+                    prefs.saveAccessToken(token)
+                }
                 val meResp = api.getCurrentUser()
                 if (meResp.isSuccessful) {
                     val user = meResp.body()!!
@@ -34,6 +38,27 @@ class AuthRepository @Inject constructor(
                     Result.Error("Could not fetch profile (${meResp.code()})")
                 }
             } catch (e: Exception) {
+                Result.Error(e.message ?: "Network error")
+            }
+        }
+
+    // Direct access token login — token save කරලා /users/me verify කරනවා
+    suspend fun signInWithToken(token: String): Result<User> =
+        withContext(Dispatchers.IO) {
+            try {
+                prefs.saveAccessToken(token)
+                val meResp = api.getCurrentUser()
+                if (meResp.isSuccessful) {
+                    val user = meResp.body()!!
+                    prefs.saveUser(user)
+                    Result.Success(user)
+                } else {
+                    // Token invalid — clear it
+                    prefs.saveAccessToken("")
+                    Result.Error("Invalid token (${meResp.code()})")
+                }
+            } catch (e: Exception) {
+                prefs.saveAccessToken("")
                 Result.Error(e.message ?: "Network error")
             }
         }
@@ -63,3 +88,4 @@ class AuthRepository @Inject constructor(
     fun getServerUrl() = prefs.getServerUrl()
     fun getSavedUser() = prefs.getSavedUser()
 }
+
