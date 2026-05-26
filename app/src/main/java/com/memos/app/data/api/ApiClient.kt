@@ -25,10 +25,15 @@ object NetworkModule {
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .addInterceptor { chain ->
-            // Cookie-based auth — server sets cookie on sign-in,
-            // subsequent requests just carry it automatically via CookieJar.
-            // If your server also accepts Bearer tokens, add here:
-            chain.proceed(chain.request())
+            val token = preferenceManager.getAccessToken()
+            val request = if (!token.isNullOrBlank()) {
+                chain.request().newBuilder()
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+            } else {
+                chain.request()
+            }
+            chain.proceed(request)
         }
         .addInterceptor(
             HttpLoggingInterceptor().apply {
@@ -57,3 +62,4 @@ object NetworkModule {
     fun provideMemoApiService(retrofit: Retrofit): MemoApiService =
         retrofit.create(MemoApiService::class.java)
 }
+
