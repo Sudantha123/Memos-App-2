@@ -12,8 +12,10 @@ interface MemoApiService {
     @POST("api/v1/auth/signout")
     suspend fun signOut(): Response<Unit>
 
-    @GET("api/v1/users/me")
-    suspend fun getCurrentUser(): Response<User>
+    // Correct endpoint: /api/v1/auth/me  (not /api/v1/users/me)
+    // Response is wrapped: { "user": { ... } }
+    @GET("api/v1/auth/me")
+    suspend fun getCurrentUser(): Response<GetCurrentUserResponse>
 
     @GET("api/v1/memos")
     suspend fun listMemos(
@@ -41,3 +43,4 @@ interface MemoApiService {
         @Path("name", encoded = true) name: String
     ): Response<Unit>
 }
+
