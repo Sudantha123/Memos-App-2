@@ -16,52 +16,53 @@ class AuthRepository @Inject constructor(
     private val prefs: PreferenceManager
 ) {
 
+    // Username + Password login
     suspend fun signIn(username: String, password: String): Result<User> =
         withContext(Dispatchers.IO) {
             try {
                 val signInResp = api.signIn(SignInRequest(username, password))
                 if (!signInResp.isSuccessful) {
-                    return@withContext Result.Error(
-                        "Login failed (${signInResp.code()})"
-                    )
+                    return@withContext Result.Error("Login failed (${signInResp.code()})")
                 }
                 val token = signInResp.body()?.accessToken
                 if (!token.isNullOrBlank()) {
                     prefs.saveAccessToken(token)
                 }
-                val meResp = api.getCurrentUser()
-                if (meResp.isSuccessful) {
-                    val user = meResp.body()!!
-                    prefs.saveUser(user)
-                    Result.Success(user)
-                } else {
-                    Result.Error("Could not fetch profile (${meResp.code()})")
-                }
+                fetchAndSaveCurrentUser()
             } catch (e: Exception) {
                 Result.Error(e.message ?: "Network error")
             }
         }
 
-    // Direct access token login — token save කරලා /users/me verify කරනවා
+    // Access Token direct login
+    // Flow: save token → GET /api/v1/auth/me → verify → save user
     suspend fun signInWithToken(token: String): Result<User> =
         withContext(Dispatchers.IO) {
             try {
                 prefs.saveAccessToken(token)
-                val meResp = api.getCurrentUser()
-                if (meResp.isSuccessful) {
-                    val user = meResp.body()!!
-                    prefs.saveUser(user)
-                    Result.Success(user)
-                } else {
-                    // Token invalid — clear it
+                val result = fetchAndSaveCurrentUser()
+                if (result is Result.Error) {
                     prefs.saveAccessToken("")
-                    Result.Error("Invalid token (${meResp.code()})")
                 }
+                result
             } catch (e: Exception) {
                 prefs.saveAccessToken("")
                 Result.Error(e.message ?: "Network error")
             }
         }
+
+    // GET /api/v1/auth/me — response: { "user": { ... } }
+    private suspend fun fetchAndSaveCurrentUser(): Result<User> {
+        val resp = api.getCurrentUser()
+        return if (resp.isSuccessful) {
+            val user = resp.body()?.user
+                ?: return Result.Error("Invalid token (404)")
+            prefs.saveUser(user)
+            Result.Success(user)
+        } else {
+            Result.Error("Invalid token (${resp.code()})")
+        }
+    }
 
     suspend fun signOut(): Result<Unit> = withContext(Dispatchers.IO) {
         try { api.signOut() } catch (_: Exception) {}
@@ -69,22 +70,11 @@ class AuthRepository @Inject constructor(
         Result.Success(Unit)
     }
 
-    suspend fun refreshCurrentUser(): Result<User> = withContext(Dispatchers.IO) {
-        try {
-            val resp = api.getCurrentUser()
-            if (resp.isSuccessful) {
-                val user = resp.body()!!
-                prefs.saveUser(user)
-                Result.Success(user)
-            } else {
-                Result.Error("${resp.code()}")
-            }
-        } catch (e: Exception) {
-            Result.Error(e.message ?: "Network error")
-        }
-    }
+    suspend fun refreshCurrentUser(): Result<User> =
+        withContext(Dispatchers.IO) { fetchAndSaveCurrentUser() }
 
-    fun isLoggedIn() = prefs.isLoggedIn()
+    fun isLoggedIn()   = prefs.isLoggedIn()
     fun getServerUrl() = prefs.getServerUrl()
     fun getSavedUser() = prefs.getSavedUser()
 }
+
