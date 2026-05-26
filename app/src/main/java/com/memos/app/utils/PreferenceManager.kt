@@ -17,9 +17,10 @@ class PreferenceManager @Inject constructor(
         context.getSharedPreferences("memos_prefs", Context.MODE_PRIVATE)
 
     companion object {
-        const val KEY_SERVER_URL = "server_url"
+        const val KEY_SERVER_URL  = "server_url"
         const val KEY_IS_LOGGED_IN = "is_logged_in"
-        const val KEY_USER = "user_data"
+        const val KEY_USER        = "user_data"
+        const val KEY_ACCESS_TOKEN = "access_token"
     }
 
     fun saveServerUrl(url: String) =
@@ -33,6 +34,12 @@ class PreferenceManager @Inject constructor(
 
     fun isLoggedIn(): Boolean =
         prefs.getBoolean(KEY_IS_LOGGED_IN, false)
+
+    fun saveAccessToken(token: String) =
+        prefs.edit().putString(KEY_ACCESS_TOKEN, token).apply()
+
+    fun getAccessToken(): String? =
+        prefs.getString(KEY_ACCESS_TOKEN, null)
 
     fun saveUser(user: User) {
         prefs.edit()
