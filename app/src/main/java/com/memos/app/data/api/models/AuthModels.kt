@@ -8,10 +8,13 @@ data class SignInRequest(
     @SerializedName("neverExpire") val neverExpire: Boolean = false
 )
 
+// POST /api/v1/auth/signin response — returns accessToken directly
 data class AuthResponse(
-    @SerializedName("id")          val id: Int    = 0,
-    @SerializedName("username")    val username: String = "",
-    @SerializedName("displayName") val displayName: String = "",
     @SerializedName("accessToken") val accessToken: String = ""
+)
+
+// GET /api/v1/auth/me response — { "user": { ... } }
+data class GetCurrentUserResponse(
+    @SerializedName("user") val user: User? = null
 )
 
