@@ -88,4 +88,3 @@ class AuthRepository @Inject constructor(
     fun getServerUrl() = prefs.getServerUrl()
     fun getSavedUser() = prefs.getSavedUser()
 }
-
